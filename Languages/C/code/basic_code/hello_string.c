@@ -1,0 +1,17 @@
+#include <cs50.h>
+#include <stdio.h>
+int main(void)
+{
+    string answer = get_string("what is your name? ");
+    printf("hello, %s\n", answer);
+    
+    string answer = get_string("how are you? ");
+    if (answer = good)
+    {
+        printf("type shi son\n");
+    }
+    else
+    {
+        printf("nah you're cooked\n");
+    }
+}

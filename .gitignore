@@ -1,0 +1,22 @@
+# Compiled / build artifacts
+*.o
+*.out
+*.exe
+a.out
+# C binaries (no extension) are kept case-by-case; add names here if needed
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
