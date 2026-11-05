@@ -1,0 +1,8 @@
+# emotion tag -> avatar pose file
+idle:      avatar/idle.png
+listening: avatar/listening.png
+thinking:  avatar/thinking.png
+speaking:  avatar/speaking.png
+happy:     avatar/happy.png
+annoyed:   avatar/annoyed.png
+error:     avatar/error.png

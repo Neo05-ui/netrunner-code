@@ -1,0 +1,5 @@
+# TTS settings (used from Phase 4 onward)
+engine: piper
+voice: en_GB-alba-medium
+speed: 1.05
+pitch: 1.0

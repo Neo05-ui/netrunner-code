@@ -1,0 +1,39 @@
+user:
+  name: Neo
+
+persona: capri
+
+brain:
+  # local-first: everything runs on this machine unless explicitly routed out
+  local:
+    provider: ollama
+    host: http://127.0.0.1:11434
+    model: llama3.1:latest
+    # escalate hard reasoning here later (slow on CPU, use sparingly)
+    heavy_model: gemma2:9b
+    timeout_s: 120
+  cloud:
+    enabled: false          # Phase 3. Off until the Guard exists.
+    provider: gemini
+    model: gemini-2.0-flash
+    daily_limit: 200
+
+memory:
+  facts_file: data/facts.md
+  history_turns: 8
+  db_file: data/capri.db      # episodic store: every turn, plus embeddings
+  embed_model: nomic-embed-text
+  recall: true
+  recall_k: 3                 # how many past exchanges to inject
+  # Measured on nomic-embed-text with task prefixes: genuine matches score
+  # 0.61-0.64, unrelated ones 0.47-0.54. 0.58 splits that gap. Prefer a miss
+  # over injecting a wrong memory she will then treat as fact.
+  recall_min_score: 0.58
+
+logging:
+  dir: logs
+  level: INFO
+
+server:
+  host: 127.0.0.1
+  port: 8787
