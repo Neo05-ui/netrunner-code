@@ -35,10 +35,24 @@ class OllamaProvider:
             # costing ~60s of reload on every single message
             "keep_alive": "30m",
             "options": {
-                "temperature": 0.45,    # low: small models confabulate at 0.8
+                # 0.45 was chosen against llama3.1 to curb confabulation.
+                # Measured on llama3.2:3b, 3 samples each: both 0.45 and 0.25
+                # scored 0/3 for robot register, cruelty and lecturing, but
+                # 0.25 was consistently warmer and more concrete ("Built a
+                # whole world for her, and it still wasn't enough"). The rare
+                # bad draws - a three-paragraph lecture, "I'm just a tool" -
+                # came from the tail of the 0.45 distribution, not from the
+                # persona. Narrowing the distribution is the real fix; four
+                # rounds of persona edits before this were chasing noise.
+                "temperature": 0.3,
                 "top_p": 0.9,
-                "num_ctx": 2048,        # 4096 is ~2x slower on this CPU
-                "num_predict": 140,     # she is terse by design; cap runaway replies
+                # 2048 was sized for llama3.1:8b. On the 3B model a longer
+                # window is affordable, and a real conversation overflowed
+                # the old one - which silently drops the start of the thread.
+                "num_ctx": 4096,
+                # 140 cut her off mid-sentence ("...and it's clear that it
+                # wasn't"). She is terse by choice, not by truncation.
+                "num_predict": 320,
                 "num_thread": 4,
             },
         }

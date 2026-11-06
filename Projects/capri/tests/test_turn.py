@@ -93,7 +93,13 @@ class Dead(Stub):
 bot.local = Dead()
 bot.history.clear()
 out = bot.turn("hello")
-check("a failed provider stays in character", "brain" in out.lower(), out)
+# assert the property, not the exact sentence: a failure must never surface
+# as a stack trace or name the plumbing, and must still invite him to carry
+# on. (This used to match the literal word "brain" and broke the moment the
+# message was improved - a test tied to wording, not behaviour.)
+leaky = any(w in out.lower() for w in
+            ("ollama", "traceback", "exception", "error", "http", "127.0.0.1"))
+check("a failed provider says something human", bool(out.strip()) and not leaky, out)
 
 print(f"\n  {ok}/{ok+fail} passed")
 shutil.rmtree(d, ignore_errors=True)

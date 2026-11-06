@@ -173,6 +173,25 @@ class Capri:
         # project". Require that a personal marker actually fired.
         return v.zone is Zone.RED and bool(v.matched)
 
+    # Pushing a small model toward "character" makes it write screenplay
+    # directions: "(sigh)", "(pauses, then dryly)", "*leans back*". The
+    # persona forbids them, but one that slips through reads as broken, so
+    # they are also stripped on the way out. Belt and braces, cheaply.
+    STAGE = re.compile(
+        r"\*[^*\n]{1,80}\*"                     # *leans back*
+        r"|\(\s*(?:sigh|sighs|pause|pauses|smirk|smirks|smirking|laugh\w*|"
+        r"grin\w*|shrug\w*|chuckl\w*|beat|dry|dryly|soft\w*|quiet\w*|"
+        r"look|looks|looking|turn|turns|turning|lean\w*|rolls?\s+(?:her\s+)?eyes|"
+        r"deadpan|flatly|amused|voice\s+\w+)"
+        r"[^)\n]{0,60}\)",                      # ...plus anything up to the close
+        re.I)
+
+    def _strip_stage(self, text: str) -> str:
+        out = self.STAGE.sub("", text)
+        out = re.sub(r"[ \t]{2,}", " ", out)
+        out = re.sub(r"\n{3,}", "\n\n", out)
+        return out.strip()
+
     def _now_block(self) -> str:
         from datetime import datetime
         return "Right now it is " + datetime.now().strftime("%A %d %B %Y, %H:%M") + "."
@@ -279,27 +298,33 @@ class Capri:
             # never crash at the user; stay in character, log the truth
             self.log.write(event="turn", ok=False, route=reason,
                            model=reply.model, error=reply.error, user=text)
-            return "My local brain just dropped offline. Check Ollama is running."
+            # This lands in the middle of whatever he was saying, so it has
+            # to stay in character and invite him to continue rather than
+            # reading like a stack trace. It replaced "My local brain just
+            # dropped offline. Check Ollama is running.", which arrived
+            # directly after he told her something personal.
+            return ("Lost my thread for a second there — say that again?")
 
+        clean = self._strip_stage(reply.text)
         self.history.append({"role": "user", "content": text})
-        self.history.append({"role": "assistant", "content": reply.text})
+        self.history.append({"role": "assistant", "content": clean})
 
         # chunked trim, not a rolling window
         if len(self.history) > self.max_history:
             self.history = self.history[-self.trim_to:]
 
         self.store.add_turn("user", text)
-        self.store.add_turn("assistant", reply.text)
+        self.store.add_turn("assistant", clean)
         # embedding costs an Ollama round trip; keep it off the reply path
         threading.Thread(
-            target=self.store.add_episode, args=(text, reply.text), daemon=True
+            target=self.store.add_episode, args=(text, clean), daemon=True
         ).start()
 
         self.log.write(event="turn", ok=True, route=reason, model=reply.model,
                        latency_ms=reply.latency_ms, recalled=bool(recalled),
                        tool_rounds=rounds,
-                       user_chars=len(text), reply_chars=len(reply.text))
-        return reply.text
+                       user_chars=len(text), reply_chars=len(clean))
+        return clean
 
     def health(self) -> dict:
         return {

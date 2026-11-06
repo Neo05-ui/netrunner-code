@@ -20,7 +20,11 @@ brain:
     fallback_model: llama3.1:latest
     # escalate hard reasoning here later (slow on CPU, use sparingly)
     heavy_model: gemma2:9b
-    timeout_s: 120
+    # a real conversation grew the context until a turn took 89.8s, and the
+    # next one timed out at 120 - the moment Neo was mid-way through telling
+    # her something that mattered. Cost of a long ceiling: nothing. Cost of a
+    # short one: she drops out exactly when the message is longest.
+    timeout_s: 420
   cloud:
     enabled: false          # Phase 3. Off until the Guard exists.
     provider: gemini
