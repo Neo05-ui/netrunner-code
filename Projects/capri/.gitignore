@@ -5,6 +5,10 @@
 data/
 logs/
 
+# credentials
+.env
+*token*.json
+
 # transient
 *.db
 *.db-journal

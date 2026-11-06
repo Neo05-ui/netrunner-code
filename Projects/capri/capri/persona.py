@@ -42,5 +42,11 @@ class Persona:
             self._text
             .replace("{{facts}}", facts or "(nothing recorded yet)")
             .replace("{{user_name}}", user_name)
-            .replace("{{now}}", datetime.now().strftime("%A %d %B %Y, %H:%M"))
+            # The clock does NOT belong in the system prompt. It changes every
+            # minute, which moves the cached prefix and forces Ollama to
+            # re-evaluate the whole thing: measured 0.4s on a cache hit
+            # against 36.1s on a miss, for the identical question. The time
+            # is injected at the TAIL of the message list instead, where it
+            # costs nothing. See Capri._now_block().
+            .replace("{{now}}", "")
         )

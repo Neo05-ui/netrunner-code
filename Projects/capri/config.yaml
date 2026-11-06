@@ -8,7 +8,16 @@ brain:
   local:
     provider: ollama
     host: http://127.0.0.1:11434
-    model: llama3.1:latest
+    # gemma3:4b is 1.8x faster but Ollama reports it "does not support
+    # tools" - switching to it silently removed every sense she has, and she
+    # immediately invented "your task list is empty" against a list of 17.
+    # A model for this project MUST have the tools capability.
+    # llama3.2:3b - 2GB instead of 4.9, median turn 9.6s against 25.9s, and
+    # crucially it HAS the tools capability. gemma3:4b was faster still but
+    # Ollama reports it "does not support tools", which silently removed
+    # every sense she has. Check capabilities before benchmarking anything.
+    model: llama3.2:3b
+    fallback_model: llama3.1:latest
     # escalate hard reasoning here later (slow on CPU, use sparingly)
     heavy_model: gemma2:9b
     timeout_s: 120
@@ -29,6 +38,15 @@ memory:
   # 0.61-0.64, unrelated ones 0.47-0.54. 0.58 splits that gap. Prefer a miss
   # over injecting a wrong memory she will then treat as fact.
   recall_min_score: 0.58
+
+tools:
+  enabled: true
+  max_tier: 0            # 0 = read-only. Raise ONLY after she has proven stable.
+  max_rounds: 2          # tool round-trips per turn; a CPU model must stay bounded
+  dry_run: false
+  file_roots:            # she can read nothing outside these
+    - ~/Downloads/netrunner/code/Projects/capri
+  ticktick_token: data/ticktick_token.json
 
 logging:
   dir: logs
