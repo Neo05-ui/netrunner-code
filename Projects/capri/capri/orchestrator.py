@@ -220,6 +220,14 @@ class Capri:
 
         provider, text, reason = self._route(user_text)
         disclosure = self._is_disclosure(text)
+        # decided here, before anything reads them. Twice tonight a block that
+        # USED one of these landed above the line that SET it, and every turn
+        # raised UnboundLocalError. All turn-level decisions go together, at
+        # the top, so there is no gap for an edit to fall into.
+        tools = None
+        if (not disclosure and self.tools_enabled and self.tools.available()
+                and self._may_need_tools(text)):
+            tools = self.tools.as_ollama_tools()
 
         system = self.persona.system_prompt(
             facts=self.facts.read(), user_name=self.user_name
@@ -234,6 +242,18 @@ class Capri:
         # the clock goes here, after the stable prefix, never inside it
         messages.append({"role": "system", "content": self._now_block()})
 
+        if tools is None and not disclosure:
+            # Without a reading she will still happily describe the machine:
+            # observed "the ThinkPad's battery is at 87%, thermal throttling
+            # is still active" on a bare "how are you", with no tool call and
+            # the real figure at 100%. The persona forbids it and she does it
+            # anyway, so the ban is stated again at the point it applies.
+            messages.append({"role": "system", "content":
+                "You have taken no readings this turn. Do not mention his "
+                "battery, temperature, fans, CPU, memory, disk, uptime or any "
+                "other machine state — you have not looked and you do not "
+                "know. Talk about something else."})
+
         if disclosure:
             messages.append({"role": "system", "content":
                 "He is telling you something personal about his own life. "
@@ -243,12 +263,6 @@ class Capri:
                 "voice."})
         messages.append({"role": "user", "content": text})
 
-        # a personal disclosure gets no tools at all: looking something up is
-        # itself a way of deflecting it
-        tools = None
-        if (not disclosure and self.tools_enabled and self.tools.available()
-                and self._may_need_tools(text)):
-            tools = self.tools.as_ollama_tools()
         reply = provider.chat(messages, tools=tools)
 
         # let her look things up, but bound it: an unbounded loop on a CPU
