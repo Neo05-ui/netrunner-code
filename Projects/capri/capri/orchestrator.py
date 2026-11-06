@@ -148,14 +148,14 @@ class Capri:
 
     # ---- recall ----------------------------------------------------------
     # A 3B model will not reliably follow "do not deflect this" from a
-    # persona paragraph - measured: it answered "i'm having a rough week"
+    # persona paragraph - measured: it answered a plain "terrible week" line
     # with "Not something I can see." So the detection happens in code and
     # the instruction is injected right where it applies, the same way the
     # memory commands bypass the model entirely.
     #
     # The Guard already finds personal content. The only extra judgement
     # needed is statement vs question: "what's my cat called?" is a fact he
-    # is asking for and may be refused; "i'm having a rough week" is him
+    # is asking for and may be refused; a "terrible week" remark is him
     # telling her something and must never be.
     FACT_QUESTION = re.compile(
         r"^\s*(what|when|where|which|who|how many|how much|do i|did i|am i|"

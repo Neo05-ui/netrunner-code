@@ -66,7 +66,7 @@ check("no false 'no readings' claim when tools are offered",
       "taken no readings" not in sys_msgs)
 
 # a disclosure gets the engage instruction and NO tools
-r, call = last("i'm having a rough week honestly")
+r, call = last("i've had a terrible week")
 sys_msgs = " ".join(m["content"] for m in call["messages"] if m["role"] == "system")
 check("disclosure gets no tools", call["tools"] is None)
 check("disclosure gets the engage instruction", "NOT a request for information" in sys_msgs)

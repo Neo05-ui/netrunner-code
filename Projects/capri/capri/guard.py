@@ -45,9 +45,10 @@ RED_PATTERNS = [
     r"|sad|miserable|hurt|crying|cried|angry|upset|ashamed|guilt\w*"
     r"|overwhelmed|burnt? out|exhausted|hopeless|worthless)\b",
     r"\b(therapy|therapist|counsel\w+|medication|diagnos\w+|mental health)\b",
-    # How people actually say it. "i'm having a rough week" contains none of
-    # the words above, and was classified as ordinary text until this was
-    # added - which also meant the assistant deflected it as a data question.
+    # How people actually phrase distress. A plain "rough week" line contains
+    # none of the words above, so it was classified as ordinary text until
+    # this was added - which also meant the assistant deflected it as though
+    # it were a request for data.
     r"\b(rough|tough|hard|bad|shit+y?|awful|terrible|long)\s+"
     r"(day|week|month|year|time|patch|one)\b",
     r"\b(struggling|not doing (great|well|ok)|barely|can'?t cope|fed up"

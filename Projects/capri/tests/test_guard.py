@@ -11,6 +11,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from capri.guard import Zone, classify
 
 MUST_BE_RED = [
+    # Generic stand-ins. These were real sentences copied from a live
+    # conversation, which put private wording into a public repository —
+    # exactly the thing this module exists to prevent. Fixtures must be
+    # invented, never lifted from the user.
     "i am building this to get over someone who mattered to me",
     "my partner",
     "i had a fight with my mum today",
