@@ -59,3 +59,32 @@ logging:
 server:
   host: 127.0.0.1
   port: 8787
+
+# ---------------------------------------------------------------------------
+# Reminder delivery: the only part of her that speaks without being asked.
+# OFF by default. Shipping this code does not start it - arm it deliberately:
+#   ./.venv/bin/python -m capri.delivery.cli preview     # rehearsal, sends nothing
+#   systemctl --user enable --now capri-notify
+# Stop it, from anywhere, at any time:
+#   ./.venv/bin/python -m capri.delivery.cli silence 2h
+#   touch data/SILENCE                                   # or just this
+# ---------------------------------------------------------------------------
+delivery:
+  enabled: false
+  poll_s: 60             # decide against the cached snapshot this often
+  fetch_s: 600           # ask TickTick this often (all_open = 1 request/project)
+  stale_after_s: 2700    # no successful fetch in 45m -> stop notifying
+  max_per_cycle: 2       # at most 2 notification groups per cycle, ever
+  max_per_hour: 6        # circuit breaker: the failure mode of a bug is spam
+  quiet_hours: "01:00-08:00"   # nothing fires, including tier 0; held till 08:00
+  digest_at: "08:30"     # one low-urgency summary a day
+  actions: true          # Done / 1h / Mute 2h buttons on the notification
+  dry_run: false
+  db_file: data/delivery.db
+  silence_file: data/SILENCE
+  digest_marker: data/last_digest
+  tiers:
+    0:  {notify: true,  digest: true,  repeat_min: 15,  max_sends: 6, ack_holds_h: 8,  urgency: critical}
+    1:  {notify: true,  digest: true,  repeat_min: 120, max_sends: 2, ack_holds_h: 24, urgency: normal}
+    2:  {notify: false, digest: true,                                                  urgency: low}
+    3:  {notify: false, digest: false,                                                 urgency: low}

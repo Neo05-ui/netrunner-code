@@ -1,0 +1,28 @@
+# Capri reminder delivery. A separate unit from capri-core on purpose:
+# `systemctl --user stop capri-notify` is a kill switch that does not depend
+# on any code in this repository being correct.
+#
+#   cp scripts/capri-notify.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now capri-notify
+#
+# It needs the session bus to reach KDE's notification daemon; a user service
+# inherits DBUS_SESSION_BUS_ADDRESS from the systemd user environment.
+[Unit]
+Description=Capri reminder delivery
+After=graphical-session.target capri-core.service
+PartOf=graphical-session.target
+# a crash loop must never become a notification loop
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=/home/neo/Downloads/netrunner/code/Projects/capri
+ExecStart=/home/neo/Downloads/netrunner/code/Projects/capri/.venv/bin/python -m capri.delivery.cli run
+Restart=on-failure
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=graphical-session.target

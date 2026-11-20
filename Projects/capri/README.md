@@ -80,7 +80,9 @@ Requires Ollama running on `127.0.0.1:11434`.
 - [x] Phase 0 — scaffold, config, venv
 - [x] Phase 1 — orchestrator, Ollama provider, persona, hot reload, logging
 - [x] Phase 2 — SQLite turn store, semantic recall, remember/forget
-- [ ] Phase 3 — tool registry, permission tiers, Guard, cloud provider
+- [x] Phase 3 — tool registry, permission tiers, Guard (cloud provider still off)
+- [x] Reminder delivery — scheduler, KDE notifications, acknowledgement,
+      kill switch. **Disarmed by default**; see below.
 - [ ] Phase 4 — voice out (Piper), voice in (faster-whisper)
 - [ ] Phase 5 — Electron body
 
@@ -567,3 +569,116 @@ Each one marked correct behaviour as failure:
 Pattern worth remembering: **a test that marks correct behaviour as failure is
 worse than no test.** All three would have led to discarding a working setup.
 Read the replies, not the score.
+
+
+## Reminder delivery
+
+The only part of her that speaks without being spoken to, and therefore the
+only part that can make her unwelcome. It runs as its own systemd unit, never
+loads a language model, and is off until armed.
+
+### Stopping her
+
+Any one of these, from anywhere, at any time:
+
+    ./.venv/bin/python -m capri.delivery.cli silence 2h   # or: off, 30m, 1d
+    touch data/SILENCE                                     # same effect
+    systemctl --user stop capri-notify                     # stops the process
+    "shut up" / "be quiet for 2 hours"                     # in chat
+    Mute 2h                                                # on the popup itself
+
+The switch is a file, read immediately before every send and never cached, so
+it also stops a repeat cycle already in flight. It was written before the
+notifier was, which is the only order that makes sense for this.
+
+### Arming it
+
+    ./.venv/bin/python -m capri.delivery.cli preview    # rehearsal, sends nothing
+    ./.venv/bin/python -m capri.delivery.cli test       # one popup, to prove the path
+    # then set delivery.enabled: true in config.yaml
+    cp scripts/capri-notify.service ~/.config/systemd/user/
+    systemctl --user daemon-reload && systemctl --user enable --now capri-notify
+
+`preview` runs the same `evaluate()` the daemon does — not a second
+implementation of it — and prints the real reason for every task, refusals
+included. "Why did she not tell me about that" is answerable without reading
+source.
+
+### What gets through
+
+Tier 0 is a critical popup repeating every 15 minutes, up to six times; tier 1
+is one popup plus one nudge two hours later; tier 2 is digest-only; tier 3 has
+no delivery path at all. Several tasks in one tier are coalesced into **one**
+notification, replaced in place on repeat, because three overdue deadlines
+should be one card listing three things and not three popups keeping their own
+independent schedules.
+
+A task also has to earn the interrupt, before any question of timing:
+
+| Case | Result |
+|---|---|
+| due inside its lead (48h for tier 0, 24h for tier 1) | popup |
+| overdue, under 14 days | popup |
+| overdue by more than 14 days | digest only — a backlog, not a deadline |
+| due further out than its lead | digest only |
+| no due date, no priority flag | digest only |
+| no due date but he flagged it high | popup |
+
+The stale rule earned its place immediately. Rehearsed against the real task
+list, every single item was three to four weeks overdue — so the first version
+would have opened with a screaming critical alarm, repeating every fifteen
+minutes, about a month-old backlog. Past 14 days (the same threshold
+`priority.py` already uses, so the two cannot disagree) it is digest material.
+
+### Brakes
+
+- **Kill switch** — the file above, checked before every send.
+- **Circuit breaker** — more than `max_per_hour` sends and delivery mutes
+  itself until the hour passes. The failure mode of a scheduler bug is thirty
+  popups, and by then no apology recovers it. The count is persisted, so a
+  crash-looping daemon cannot reset its own limit.
+- **Quiet hours** — 01:00–08:00, nothing fires, including tier 0. A deadline
+  popup at 03:00 cannot be acted on, and the repeat cycle would burn all six
+  attempts against a sleeping man and give up before he woke. Held items fire
+  when the window opens.
+- **Staleness** — no successful TickTick fetch inside 45 minutes and delivery
+  stops rather than nagging about a task that may already be ticked off.
+- **`max_sends`** — tier 0 stops after six unanswered sends. An alarm that
+  cannot be silenced is not urgent, it is broken.
+- **Separate process** — a bug here cannot take down the chat server, and
+  `systemctl --user stop` is a brake that does not depend on this code being
+  correct.
+
+Every one of those fails **quiet**. The Guard resolves doubt toward privacy;
+delivery resolves it toward saying nothing. A missed reminder costs a task; a
+runaway notifier costs the whole project.
+
+### Acknowledging
+
+Completing the task in TickTick is the easiest and needs no code here — it
+leaves the snapshot and is never considered again. Otherwise: the **Done**
+button, `cli ack <part of the title>`, or "done with the assignment" in chat.
+An ack holds for 8 hours on tier 0 and 24 on tier 1, then the task comes back,
+because the deadline has not moved.
+
+One deliberate hole in the chat pattern: "I'm done with this week" is venting,
+and nothing distinguishes it from "done with <task>" except whether the ledger
+has a match. It does not, so that falls through to her normally instead of
+being answered with a lookup miss.
+
+### No language model in this path
+
+A notification's text is the task's own title, verbatim. The brain can be
+wrong, and a popup that invents a deadline at 2am is worse than no popup.
+Titles are markup-escaped before display and GVariant-escaped before they
+reach the bus — an apostrophe in a task title would otherwise make `gdbus`
+reject the call, i.e. silently no notification.
+
+### Why gdbus and not notify-send
+
+`notify-send -p -A ...` does not flush the notification id until the process
+exits, and `-A` makes it wait for the user: measured here, the id arrived
+3.02s later, on expiry. Without the id a repeat cannot replace the previous
+popup. `gdbus call ... Notify` returns it immediately; button presses come
+back on one long-lived `gdbus monitor`, best-effort — if it dies the buttons
+stop working and every other acknowledgement path still does.

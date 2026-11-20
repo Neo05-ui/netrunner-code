@@ -58,6 +58,27 @@ class Capri:
         self.max_tool_rounds = int(tcfg.get("max_rounds", 2))
         self._register_tools(tcfg)
 
+        # ---- delivery control (Phase 4) --------------------------------
+        # She does not run the notifier - that is a separate process - but she
+        # holds its two pieces of state so that "shut up" works in chat. Both
+        # are file-backed, so this needs no IPC and works whether the daemon
+        # is running, wedged, or not installed at all.
+        self.silence = self.dledger = self.dchat = None
+        try:
+            from .delivery import chat as dchat
+            from .delivery.acks import Ledger
+            from .delivery.killswitch import Silence
+            dcfg = self.cfg.get("delivery", {}) or {}
+            self.silence = Silence(
+                root / dcfg.get("silence_file", "data/SILENCE"),
+                max_per_hour=int(dcfg.get("max_per_hour", 6)))
+            self.dledger = Ledger(root / dcfg.get("db_file",
+                                                  "data/delivery.db"))
+            self.dchat = dchat
+        except Exception as e:                  # noqa: BLE001
+            self.log.write(event="tool_init", ok=False, which="delivery",
+                           error=repr(e))
+
         self.history: list[dict] = []
         # A rolling window that drops one message per turn shifts the prompt
         # prefix every turn, which invalidates Ollama's cache and costs a full
@@ -237,6 +258,22 @@ class Capri:
                            payload_chars=len(payload))
             return reply
 
+        # "shut up" must not be paraphrased by a 3B model, so it never
+        # reaches one. handle() returns None when it turns out not to be a
+        # command - "I'm done with this week" is him venting, not an
+        # acknowledgement - and then this falls through to her normally.
+        if self.dchat is not None:
+            dcmd = self.dchat.parse(user_text)
+            if dcmd:
+                said = self.dchat.handle(dcmd[0], dcmd[1], self.silence,
+                                         self.dledger)
+                if said is not None:
+                    self.store.add_turn("user", user_text)
+                    self.store.add_turn("assistant", said)
+                    self.log.write(event="delivery_command", ok=True,
+                                   kind=dcmd[0])
+                    return said
+
         provider, text, reason = self._route(user_text)
         disclosure = self._is_disclosure(text)
         # decided here, before anything reads them. Twice tonight a block that
@@ -335,4 +372,21 @@ class Capri:
             "memory": self.store.stats(),
             "tools": [t.name for t in self.tools.available()],
             "tool_ceiling": int(self.tools.max_tier),
+            "delivery": self._delivery_health(),
         }
+
+    def _delivery_health(self) -> dict:
+        """What the notifier's state looks like from in here. She reports it
+        rather than guessing: "am I muted" should never be answered by a model."""
+        if self.silence is None:
+            return {"wired": False}
+        try:
+            silent, why = self.silence.state()
+            return {"wired": True,
+                    "enabled": bool((self.cfg.get("delivery") or {})
+                                    .get("enabled", False)),
+                    "silent": silent, "why": why,
+                    "sends_last_hour": self.silence.sends_last_hour(),
+                    "tracked": len(self.dledger.all()) if self.dledger else 0}
+        except Exception as e:                  # noqa: BLE001
+            return {"wired": True, "error": repr(e)}
