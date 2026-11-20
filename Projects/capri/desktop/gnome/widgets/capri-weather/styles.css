@@ -1,0 +1,26 @@
+.capri-weather {
+    background-color: rgba(10, 8, 18, 0.68);
+    border: 2px solid #8A3CE8;
+    border-radius: 22px;
+    padding: 20px;
+    spacing: 8px;
+}
+.capri-weather-day {
+    background-color: #160F2A;
+    border: 1px solid rgba(138, 60, 232, 0.45);
+    border-radius: 11px;
+    padding: 0 8px;
+}
+.capri-weather-key {
+    font-family: "Quicksand";
+    font-size: 12px;
+    font-weight: 900;
+    color: #00FF55;
+    width: 62px;
+}
+.capri-weather-val {
+    font-family: "Quicksand";
+    font-size: 12px;
+    font-weight: bold;
+    color: #F2ECFF;
+}

@@ -1,0 +1,5 @@
+/* The card itself is styled by the host from the widget's config.style, so
+   this file only covers what the host cannot reach. */
+.capri-sysmon {
+    spacing: 2px;
+}

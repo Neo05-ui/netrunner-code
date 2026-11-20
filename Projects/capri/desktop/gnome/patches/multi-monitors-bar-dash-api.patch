@@ -1,0 +1,51 @@
+--- a/dashIsolation.js
++++ b/dashIsolation.js
+@@ -22,6 +22,30 @@
+ 
+ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+ 
++/**
++ * Ask a Dash to rebuild its icon list.
++ *
++ * Dash._queueRedisplay() no longer exists in GNOME Shell 46 - calling it
++ * threw "this._dash._queueRedisplay is not a function" on every _sync(),
++ * which left the isolated dash showing the previous monitor's apps. The
++ * Dash queues its own rebuild through Main's deferred-work queue, so use
++ * that when the method is gone, and fall back to a direct redisplay.
++ * Checked in this order so a shell that still has the method keeps using
++ * it, rather than us guessing which release renamed what.
++ *
++ * @param {object} dash - the Dash instance to refresh
++ */
++function redisplayDash(dash) {
++    if (!dash)
++        return;
++    if (typeof dash._queueRedisplay === 'function')
++        dash._queueRedisplay();
++    else if (dash._workId)
++        Main.queueDeferredWork(dash._workId);
++    else if (typeof dash._redisplay === 'function')
++        dash._redisplay();
++}
++
+ // Mirrors DASH_ANIMATION_TIME in the shell's ui/dash.js, which only exports
+ // it from GNOME Shell 50 onward; importing it breaks loading on 45-49.
+ const DASH_ANIMATION_TIME = 200;
+@@ -105,7 +129,7 @@
+         } else if (active) {
+             this._refreshDots();
+         }
+-        this._dash._queueRedisplay();
++        redisplayDash(this._dash);
+     }
+ 
+     _enable() {
+@@ -563,7 +587,7 @@
+         // idempotent (it also cancels pending work), so no timeout, later,
+         // handler or patch outlives us.
+         this._disable();
+-        this._dash._queueRedisplay();
++        redisplayDash(this._dash);
+         this._active = false;
+         this._dash = null;
+     }

@@ -1,0 +1,29 @@
+.capri-tasks {
+    background-color: rgba(10, 8, 18, 0.68);
+    border: 2px solid #8A3CE8;
+    border-radius: 22px;
+    padding: 18px;
+    spacing: 9px;
+}
+.capri-tasks-entry {
+    background-color: #160F2A;
+    border: 1px solid rgba(138, 60, 232, 0.5);
+    border-radius: 9px;
+    padding: 6px 11px;
+    font-family: "Quicksand";
+    font-size: 15px;
+    color: #F2ECFF;
+}
+.capri-tasks-entry:focus {
+    border: 1px solid #FF0033;
+}
+.capri-tasks-entry StLabel.hint-text {
+    color: #A294C4;
+}
+.capri-tasks-row {
+    padding: 2px 0;
+    border-radius: 6px;
+}
+.capri-tasks-row:hover {
+    background-color: rgba(138, 60, 232, 0.18);
+}

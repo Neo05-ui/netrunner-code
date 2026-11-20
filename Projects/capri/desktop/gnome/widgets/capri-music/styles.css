@@ -1,0 +1,40 @@
+.capri-music {
+    background-color: rgba(10, 8, 18, 0.62);
+    border: 2px solid #8A3CE8;
+    border-radius: 18px;
+    padding: 14px;
+    spacing: 14px;
+}
+.capri-music-art {
+    background-color: #15102A;
+    border: 1px solid #8A3CE8;
+    border-radius: 12px;
+    background-size: cover;
+}
+.capri-music-title {
+    font-family: "Quicksand";
+    font-size: 19px;
+    font-weight: 900;
+    color: #F2ECFF;
+}
+.capri-music-artist {
+    font-family: "Quicksand";
+    font-size: 15px;
+    font-weight: bold;
+    color: #00FF55;
+}
+/* Transport controls. The hover colour lives here because St resolves
+   pseudo-classes from the theme, not from an inline style. */
+.capri-music-btn {
+    color: #F2ECFF;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+.capri-music-btn:hover {
+    color: #00FF55;
+    background-color: rgba(138, 60, 232, 0.25);
+}
+.capri-music-btn:active {
+    color: #FF0033;
+}

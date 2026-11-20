@@ -1,0 +1,6 @@
+{
+    "id": "capri-sysinfo",
+    "name": "Capri System Info",
+    "description": "Distro, kernel, CPU, RAM and desktop, with the Capri shard mark",
+    "anchor": "center"
+}

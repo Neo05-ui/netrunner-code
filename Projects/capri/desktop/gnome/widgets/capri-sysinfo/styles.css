@@ -1,0 +1,24 @@
+/* Loaded into the shell theme by the host (servicePluginRegistry loads each
+   plugin's styles.css), so these classes are available to the actors below.
+   The card look lives here rather than inline so the host's own
+   config.style can still override the container via set_style(). */
+.capri-sysinfo {
+    background-color: rgba(10, 8, 18, 0.68);
+    border: 2px solid #8A3CE8;
+    border-radius: 22px;
+    padding: 18px;
+    spacing: 16px;
+}
+.capri-sysinfo-key {
+    font-family: "Quicksand";
+    font-size: 13px;
+    font-weight: 900;
+    color: #00FF55;
+    width: 76px;
+}
+.capri-sysinfo-val {
+    font-family: "Quicksand";
+    font-size: 13px;
+    font-weight: bold;
+    color: #F2ECFF;
+}

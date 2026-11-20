@@ -1,0 +1,6 @@
+{
+    "id": "capri-music",
+    "name": "Capri Music",
+    "description": "Now playing over MPRIS, with transport controls and a bar visualiser",
+    "anchor": "center"
+}

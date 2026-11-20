@@ -1,0 +1,11 @@
+{
+    "id": "capri-weather",
+    "name": "Capri Weather",
+    "description": "Current conditions and a three-day strip from open-meteo (no API key)",
+    "anchor": "center",
+    "config": {
+        "latitude": null,
+        "longitude": null,
+        "place": ""
+    }
+}

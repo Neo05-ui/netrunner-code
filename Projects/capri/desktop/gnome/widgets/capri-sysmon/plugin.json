@@ -1,0 +1,6 @@
+{
+    "id": "capri-sysmon",
+    "name": "Capri System Monitor",
+    "description": "CPU, memory, swap, uptime and network, read straight from /proc",
+    "anchor": "center"
+}

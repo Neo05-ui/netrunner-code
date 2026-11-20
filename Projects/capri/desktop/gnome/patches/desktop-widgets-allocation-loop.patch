@@ -1,0 +1,23 @@
+--- a/extension.js
++++ b/extension.js
+@@ -146,9 +146,20 @@
+             applyTextAlignment(childLabel, fullStyle.textAlign);
+         }
+ 
++        // This runs from inside notify::allocation. An unconditional
++        // set_position() re-invalidates the allocation the actor was just
++        // given, so update_stage_views() later in the same frame finds it
++        // unallocated and logs "needs an allocation" - and the queued
++        // relayout re-fires this handler, every frame, forever (measured
++        // ~110 lines/sec per widget). Writing only a position that actually
++        // changed lets the loop settle after the first real layout.
++        // Epsilon: applyAnchor returns floats (targetX - width * 0.5).
+         const positionWidget = () => {
+             if (widgetActor.width === 0 && widgetActor.height === 0) return;
+             const pos = applyAnchor(x, y, widgetActor.width, widgetActor.height, anchor);
++            if (Math.abs(pos.x - widgetActor.x) < 0.5 &&
++                Math.abs(pos.y - widgetActor.y) < 0.5)
++                return;
+             widgetActor.set_position(pos.x, pos.y);
+         };
+ 

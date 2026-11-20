@@ -1,0 +1,6 @@
+{
+    "id": "capri-tasks",
+    "name": "Capri Tasks",
+    "description": "A checklist kept in ~/.local/share/capri/tasks.json",
+    "anchor": "center"
+}

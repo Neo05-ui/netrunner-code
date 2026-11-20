@@ -1,0 +1,6 @@
+{
+    "id": "capri-viz",
+    "name": "Capri Visualiser",
+    "description": "A wide bar visualiser that wakes when something is playing",
+    "anchor": "center"
+}
